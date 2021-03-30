@@ -6,9 +6,10 @@
  * @flow strict-local
  */
 
-import React from 'react';
-import type {Node} from 'react';
+import React, { useEffect, useState } from 'react';
+
 import {
+  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -16,97 +17,74 @@ import {
   Text,
   useColorScheme,
   View,
+  TouchableOpacity,
+  TextInput
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+class App extends React.Component {
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
+  constructor() {
+    super();
+
+    this.state = {
+      query: 'python',
+      issues: {}
+    }
+  }
+
+  componentDidMount() {
+    this.getIssues()
+  }
+
+  setToState = async (res) => {
+    this.setState({
+      issues: res
+    })
+
+    console.log('issues', this.state.issues);
+  }
+
+  getIssues = () => {
+    fetch(`https://api.github.com/search/issues?q=${this.state.query.toString()}+state:open`)
+      .then(response => response.json())
+      .then(res => {
+        if (res.items.length > 0) {
+
+          this.setToState(res)
+        }
+
+        // console.log(res.items);
+
+      })
+    // await console.log(this.state.issues)
+  }
+
+  render() {
+    const { issues } = this.state;
+    return (
+      <View style={{ flex: 1 }}>
+        <TextInput style={{ borderColor: 'black', borderWidth: 1 }} placeholder='Search' onChangeText={(e) => this.setState({ query: e })} />
+        <TouchableOpacity style={{ borderColor: 'blue', borderWidth: 1, width: '20%', marginVertical: 10 }} onPress={() => this.getIssues()}><Text>Ge Issues</Text></TouchableOpacity>
+        <ScrollView>
           {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+            Object.keys(issues).length !== 0 ? <View>
+              {
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+                issues.items.map((value, index) => {
+                  return <View key={index} style={{ marginVertical: 10 }}>
+                    <Text>Id--{value.id}</Text>
+                    <Text >Title--{value.title}</Text>
+                  </View>
+                })
+              }
+            </View>
+              :
+              <View><ActivityIndicator size='large' color='teal' /></View>
+          }
+        </ScrollView>
+      </View>
+    )
+  }
+}
 
 export default App;
